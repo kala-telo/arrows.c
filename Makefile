@@ -1,4 +1,4 @@
-.PHONY: all debug utils clean windows obj
+.PHONY: all clean
 LDFLAGS=-lraylib -lm -lomp
 CC=cc
 CFLAGS=-fopenmp -O3 -Wall
@@ -13,3 +13,6 @@ build/%.o: src/%.c
 
 all: $(OBJ)
 	$(CC) $(OBJ) $(CFLAGS) $(LDFLAGS) -o $(TARGET)
+
+clean:
+	rm build/*
