@@ -3,9 +3,9 @@ LDFLAGS=-lraylib -lm -lomp
 CC=cc
 CFLAGS=-fopenmp -O3 -Wall
 TARGET=./build/arrows
-MAIN_SRC=$(wildcard src/*.c)
+SRC=$(wildcard src/*.c)
 
-OBJ=$(subst src/,build/,$(MAIN_SRC:.c=.o))
+OBJ=$(subst src/,build/,$(SRC:.c=.o))
 
 build/%.o: src/%.c
 	@mkdir -p ./build/
@@ -14,5 +14,7 @@ build/%.o: src/%.c
 all: $(OBJ)
 	$(CC) $(OBJ) $(CFLAGS) $(LDFLAGS) -o $(TARGET)
 
+native:
+	$(MAKE) CFLAGS="$(CFLAGS) -march=native" $(MAKEFLAGS)
 clean:
 	rm build/*

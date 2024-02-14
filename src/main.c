@@ -73,7 +73,6 @@ enum Direction {
 
 typedef struct {
     enum CellType type;
-    // XXX: second signal counter
     int signal_count;
     enum SignalType signal;
     enum Direction direction;
@@ -87,16 +86,14 @@ typedef struct {
 } point_t;
 
 typedef struct {
-    enum QueueType {
-        QT_POWER,
-        QT_BLOCK
+    enum QueueType { QT_POWER, QT_BLOCK
     } type;
     point_t position;
 } queue_t;
 
 typedef struct {
     arrow_t arrows[256];
-     queue_t *update_queue;
+    queue_t *update_queue;
     uint8_t unload_timer;
 } chunk_t;
 typedef struct map_t {
@@ -107,7 +104,7 @@ typedef struct map_t {
 static inline struct ChunkPos pos2chunk(int x, int y) {
     return (struct ChunkPos){
         .x = x / CHUNK_SIZE,
-        .y = y / CHUNK_SIZE
+            .y = y / CHUNK_SIZE
     };
 }
 
@@ -153,88 +150,87 @@ void map_queue_update(map_t *map) {
             hmgetp(map->chunks, pos2chunk(q.position.x, q.position.y))->value.unload_timer = 0;
             arrow_t *arrow = map_get(map, q.position.x, q.position.y);
             switch (q.type) {
-            case QT_BLOCK:
-                arrow->signal = S_BLOCK;
-                arrow->signal_count = 0;
-                break;
-            case QT_POWER:
-                if (arrow->signal == S_BLOCK) break;
-                arrow->signal_count++;
-                switch(arrow->type) {
-                case Empty:
+                case QT_BLOCK:
+                    arrow->signal = S_BLOCK;
+                    arrow->signal_count = 0;
                     break;
-                case Arrow:
-                    arrow->signal = S_RED;
+                case QT_POWER:
+                    if (arrow->signal == S_BLOCK) break;
+                    arrow->signal_count++;
+                    switch(arrow->type) {
+                        case Empty:
+                            break;
+                        case Arrow:
+                            arrow->signal = S_RED;
+                            break;
+                        case Source:
+                            break;
+                        case Blocker:
+                            arrow->signal = S_RED;
+                            break;
+                        case Delay:
+                            if (arrow->signal == S_NONE || arrow->signal == S_BLOCK)
+                                arrow->signal = S_BLUE;
+                            else
+                                arrow->signal = S_RED;
+                            break;
+                        case Detector:
+                            break;
+                        case SplitterUpDown:
+                            arrow->signal = S_RED;
+                            break;
+                        case SplitterUpRight:
+                            arrow->signal = S_RED;
+                            break;
+                        case SplitterUpRightLeft:
+                            arrow->signal = S_RED;
+                            break;
+                        case Pulse:
+                            break;
+                        case BlueArrow:
+                            arrow->signal = S_BLUE;
+                            break;
+                        case Diagonal:
+                            arrow->signal = S_BLUE;
+                            break;
+                        case BlueSplitterUpUp:
+                            arrow->signal = S_BLUE;
+                            break;
+                        case BlueSplitterRightUp:
+                            arrow->signal = S_BLUE;
+                            break;
+                        case BlueSplitterUpDiagonal:
+                            arrow->signal = S_BLUE;
+                            break; case Not:
+                                arrow->signal = S_NONE;
+                            break;
+                        case And:
+                            arrow->signal = arrow->signal_count >= 2 ? S_YELLOW : S_NONE;
+                            break;
+                        case Xor:
+                            arrow->signal = arrow->signal_count % 2 != 0 ? S_YELLOW : S_NONE;
+                            break;
+                        case Latch:
+                            arrow->signal = arrow->signal_count >= 2 ? S_YELLOW : S_NONE;
+                            break;
+                        case Flipflop:
+                            if(arrow->signal_count > 1) { break; }
+                            arrow->signal = arrow->signal == S_NONE ? S_YELLOW : S_NONE;
+                            break;
+                        case Random:
+                            arrow->signal = rand() % 2;
+                            break;
+                        case Button:
+                            break;
+                        case LevelSource:
+                            break;
+                        case LevelTarget:
+                            break;
+                        case DirectoinalButton:
+                            arrow->signal = S_ORANGE;
+                            break;
+                    }
                     break;
-                case Source:
-                    break;
-                case Blocker:
-                    arrow->signal = S_RED;
-                    break;
-                case Delay:
-                    if (arrow->signal == S_NONE || arrow->signal == S_BLOCK)
-                        arrow->signal = S_BLUE;
-                    else
-                        arrow->signal = S_RED;
-                    break;
-                case Detector:
-                    break;
-                case SplitterUpDown:
-                    arrow->signal = S_RED;
-                    break;
-                case SplitterUpRight:
-                    arrow->signal = S_RED;
-                    break;
-                case SplitterUpRightLeft:
-                    arrow->signal = S_RED;
-                    break;
-                case Pulse:
-                    break;
-                case BlueArrow:
-                    arrow->signal = S_BLUE;
-                    break;
-                case Diagonal:
-                    arrow->signal = S_BLUE;
-                    break;
-                case BlueSplitterUpUp:
-                    arrow->signal = S_BLUE;
-                    break;
-                case BlueSplitterRightUp:
-                    arrow->signal = S_BLUE;
-                    break;
-                case BlueSplitterUpDiagonal:
-                    arrow->signal = S_BLUE;
-                    break;
-                case Not:
-                    arrow->signal = S_NONE;
-                    break;
-                case And:
-                    arrow->signal = arrow->signal_count >= 2 ? S_YELLOW : S_NONE;
-                    break;
-                case Xor:
-                    arrow->signal = arrow->signal_count % 2 != 0 ? S_YELLOW : S_NONE;
-                    break;
-                case Latch:
-                    arrow->signal = arrow->signal_count >= 2 ? S_YELLOW : S_NONE;
-                    break;
-                case Flipflop:
-                    if(arrow->signal_count > 1) { break; }
-                    arrow->signal = arrow->signal == S_NONE ? S_YELLOW : S_NONE;
-                    break;
-                case Random:
-                    arrow->signal = rand() % 2;
-                    break;
-                case Button:
-                    break;
-                case LevelSource:
-                    break;
-                case LevelTarget:
-                    break;
-                case DirectoinalButton:
-                    arrow->signal = S_ORANGE;
-                    break;
-                }
-                break;
             }
         }
     }
@@ -310,7 +306,7 @@ void map_import(map_t *map, const char *input) {
 
 void map_update(map_t *map) {
     const size_t chunk_count = hmlen(map->chunks);
-    #pragma omp parallel for
+#pragma omp parallel for
     for(size_t i = 0; i < chunk_count; i++) {
         chunk_t *chunk = &map->chunks[i].value;
         if (chunk->unload_timer >= UNLOAD_TIMER_MAX)
@@ -719,20 +715,19 @@ void handle_input(settings_t *settings) {
         settings->camera = (Vector2){ 0, 0 };
     }
     if (IsKeyDown(keybindings[ZOOM_IN])) {
-        // TODO: unhardcode zoom
-        settings->zoom *= 1.01;
+        // TODO: unhardcode zoomFactor
+        const float zoom_factor = 1.01;
+        settings->zoom *= zoom_factor;
 
-        // TODO: zoom in center
-        settings->camera.x -= settings->zoom/2;
-        settings->camera.y -= settings->zoom/2;
+        settings->camera.x -= (settings->zoom * (zoom_factor - 1)) / 2;
+        settings->camera.y -= (settings->zoom * (zoom_factor - 1)) / 2;
     }
     if (IsKeyDown(keybindings[ZOOM_OUT])) {
-        // TODO: unhardcode zoom
-        settings->zoom *= 0.99;
+        const float zoom_factor = 0.99;
+        settings->zoom *= zoom_factor;
 
-        // TODO: zoom in center
-        settings->camera.x += settings->zoom/2;
-        settings->camera.y += settings->zoom/2;
+        settings->camera.x += (settings->zoom * (zoom_factor - 1)) / 2;
+        settings->camera.y += (settings->zoom * (zoom_factor - 1)) / 2;
     }
     if (IsKeyDown(KEY_LEFT_SHIFT) && IsKeyPressed(keybindings[ZOOM_RESET])) {
         settings->zoom = DEFAUL_ZOOM;
@@ -775,6 +770,7 @@ int main(int argc, char** argv) {
     const int MAX_NUMBER_OF_THREADS = omp_get_max_threads();
 
     InitWindow(1900, 1000, "Arrows");
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
 
     Image atlas_img = LoadImage("atlas_dark.png");
     Texture atlas_dark = LoadTextureFromImage(atlas_img);
@@ -801,59 +797,59 @@ int main(int argc, char** argv) {
 
                 Rectangle dest_rect = (Rectangle) {
                     .width = settings.zoom,
-                    .height = settings.zoom,
-                    .x = (arrow_x*settings.zoom+settings.camera.x+GetScreenWidth()/2.),
-                    .y = (arrow_y*settings.zoom+settings.camera.y+GetScreenHeight()/2.)
+                        .height = settings.zoom,
+                        .x = (arrow_x*settings.zoom+settings.camera.x*settings.zoom+GetScreenWidth()/2.),
+                        .y = (arrow_y*settings.zoom+settings.camera.y*settings.zoom+GetScreenHeight()/2.)
                 };
                 Rectangle source_rect = (Rectangle) {
                     .x = ((arrow->type-1) % 8) * 256.0,
-                    .y = (int)((arrow->type-1) / 8) * 256.0,
-                    .width = arrow->flipped ? -256 : 256,
-                    .height = 256,
+                        .y = (int)((arrow->type-1) / 8) * 256.0,
+                        .width = arrow->flipped ? -256 : 256,
+                        .height = 256,
                 };
                 if (arrow->signal != S_NONE) {
                     DrawRectangle(dest_rect.x - settings.zoom/2, dest_rect.y - settings.zoom/2, settings.zoom, settings.zoom, ({
-                        Color color = settings.black_theme ? DARK_RED : RED;
-                        switch (arrow->signal) {
-                        case S_NONE:
-                        case S_DELAY_AFTER_RED:
-                        case S_BLOCK:
-                            color = (Color){ 0, 0, 0, 0 };
-                            break;
-                        case S_RED:
-                            // color = RED;
-                            break;
-                        case S_BLUE:
-                            color = settings.black_theme ? DARK_BLUE : BLUE;
-                            break;
-                        case S_ORANGE:
-                            color = settings.black_theme ? DARK_ORANGE : ORANGE;
-                            break;
-                        case S_YELLOW:
-                            color = settings.black_theme ? DARK_YELLOW : YELLOW;
-                            break;
-                        }
-                        color;
+                                Color color = settings.black_theme ? DARK_RED : RED;
+                                switch (arrow->signal) {
+                                case S_NONE:
+                                case S_DELAY_AFTER_RED:
+                                case S_BLOCK:
+                                color = (Color){ 0, 0, 0, 0 };
+                                break;
+                                case S_RED:
+                                // color = RED;
+                                break;
+                                case S_BLUE:
+                                color = settings.black_theme ? DARK_BLUE : BLUE;
+                                break;
+                                case S_ORANGE:
+                                color = settings.black_theme ? DARK_ORANGE : ORANGE;
+                                break;
+                                case S_YELLOW:
+                                color = settings.black_theme ? DARK_YELLOW : YELLOW;
+                                break;
+                                }
+                                color;
                     }));
                 }
                 DrawTexturePro(settings.black_theme ? atlas_dark : atlas, source_rect, dest_rect, (Vector2){ settings.zoom/2, settings.zoom/2 }, ({
-                    int direction = 0;
-                    switch (arrow->direction) {
-                    case D_NORTH:
-                        // direction = 0;
-                        break;
-                    case D_EAST:
-                        direction = 90;
-                        break;
-                    case D_SOUTH:
-                        direction = 180;
-                        break;
-                    case D_WEST:
-                        direction = 270;
-                        break;
-                    }
-                    direction;
-                }), WHITE);
+                            int direction = 0;
+                            switch (arrow->direction) {
+                            case D_NORTH:
+                            // direction = 0;
+                            break;
+                            case D_EAST:
+                            direction = 90;
+                            break;
+                            case D_SOUTH:
+                            direction = 180;
+                            break;
+                            case D_WEST:
+                            direction = 270;
+                            break;
+                            }
+                            direction;
+                            }), WHITE);
             }
         }
         for(size_t j = 0; j < settings.tps/60; j++) {
