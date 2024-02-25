@@ -23,7 +23,10 @@
 #define CAMERA_SPPED 2.0f
 
 #define DEFAUL_ZOOM 16
-#define DEBUG 1
+
+#ifndef DEBUG
+#define DEBUG 0
+#endif // DEBUG
 
 typedef struct Settings {
     bool dark_theme;
